@@ -10,32 +10,36 @@ namespace NSwag.CodeGeneration.Tests.WebApi
     [TestClass]
     public class OperationIdTests
     {
-        public class OperationIdController : ApiController
+        public class OperationIdController : IndirectControllerClass
         {
             [Route("Foo")]
             [SwaggerOperation("MyFoo")]
             public void Foo()
             {
-                
             }
 
             [Route("Bar")]
             public void Bar()
             {
-                
             }
 
             [Route("Overload1")]
             public void Overload()
             {
-
             }
 
             [Route("Overload2")]
             public void Overload(int id)
             {
-
             }
+
+            [Route("Overridden")]
+            public override int OverriddenMethod() => 1;
+        }
+
+        public class IndirectControllerClass : ApiController
+        {
+            public virtual int OverriddenMethod() => 0;
         }
 
         [TestMethod]
@@ -63,7 +67,7 @@ namespace NSwag.CodeGeneration.Tests.WebApi
 
             //// Assert
             var allIds = document.Operations.Select(o => o.Operation.OperationId).ToArray();
-            Assert.AreEqual(4, allIds.Distinct().Count());
+            Assert.AreEqual(5, allIds.Distinct().Count());
         }
     }
 }

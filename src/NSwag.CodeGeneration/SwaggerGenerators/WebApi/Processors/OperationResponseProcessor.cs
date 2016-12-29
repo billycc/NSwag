@@ -114,7 +114,7 @@ namespace NSwag.CodeGeneration.SwaggerGenerators.WebApi.Processors
 
             return true;
         }
-        
+
         private async Task LoadDefaultSuccessResponseAsync(SwaggerOperation operation, MethodInfo methodInfo, string responseDescription, SwaggerGenerator swaggerGenerator)
         {
             var returnType = methodInfo.ReturnType;
@@ -132,8 +132,23 @@ namespace NSwag.CodeGeneration.SwaggerGenerators.WebApi.Processors
             }
             else
             {
-                var typeDescription = JsonObjectTypeDescription.FromType(returnType, 
-                    methodInfo.ReturnParameter?.GetCustomAttributes(), _settings.DefaultEnumHandling);
+                System.Collections.Generic.IEnumerable<Attribute> customAttrs;
+                try
+                {
+                    customAttrs = methodInfo.ReturnParameter?.GetCustomAttributes();
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    customAttrs = null;
+                    // There's a bug in .NET, possibly from as far back as .NET 2.0, where inherited return parameter custom attributes are not properly
+                    // accessed. Even if there is no actual return param on the method nor the parent, if its overriden, the static extension
+                    // GetCustomAttributes(this ParameterInfo) [used immediately above] will explode with IndexOutOfRangeException.
+                    // It seems to have been addressed in .NET 4.6.3 and/or .NET Core 1.0.3.
+                    //
+                    // see: http://stackoverflow.com/questions/38700721/reflection-with-generic-syntax-fails-on-a-return-parameter-of-an-overridden-meth
+                    // and: https://github.com/dotnet/coreclr/issues/6600
+                }
+                var typeDescription = JsonObjectTypeDescription.FromType(returnType, customAttrs, _settings.DefaultEnumHandling);
 
                 operation.Responses["200"] = new SwaggerResponse
                 {
